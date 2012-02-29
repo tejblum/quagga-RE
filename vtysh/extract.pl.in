@@ -96,38 +96,38 @@ foreach (@ARGV) {
 
         # $protocol is VTYSH_PROTO format for redirection of user input
 	my $protocol;
-    	if ($file =~ /lib/) {
-           if ($file =~ /keychain.c/) {
+    	if ($file =~ /\/lib\//) {
+           if ($file =~ /\/keychain\.c$/) {
               $protocol = "VTYSH_RIPD";
            }
-           if ($file =~ /routemap.c/) {
+           if ($file =~ /\/routemap\.c$/) {
               $protocol = "VTYSH_RIPD|VTYSH_RIPNGD|VTYSH_OSPFD|VTYSH_OSPF6D|VTYSH_BGPD|VTYSH_ZEBRA";
            }
-           if ($file =~ /filter.c/) {
+           if ($file =~ /\/filter\.c$/) {
               $protocol = "VTYSH_ALL";
            }
-           if ($file =~ /plist.c/) {
+           if ($file =~ /\/plist\.c$/) {
 	      if ($defun_array[1] =~ m/ipv6/) {
                  $protocol = "VTYSH_RIPNGD|VTYSH_OSPF6D|VTYSH_BGPD|VTYSH_ZEBRA";
               } else {
                  $protocol = "VTYSH_RIPD|VTYSH_OSPFD|VTYSH_BGPD|VTYSH_ZEBRA";
               }
            }
-           if ($file =~ /distribute.c/) {
+           if ($file =~ /\/distribute\.c$/) {
               if ($defun_array[1] =~ m/ipv6/) {
                  $protocol = "VTYSH_RIPNGD";
               } else {
                  $protocol = "VTYSH_RIPD";
               }
            }
-           if ($file =~ /if_rmap.c/) {
+           if ($file =~ /\/if_rmap\.c$/) {
               if ($defun_array[1] =~ m/ipv6/) {
                  $protocol = "VTYSH_RIPNGD";
               } else {
                  $protocol = "VTYSH_RIPD";
               }
            }
-	   if ($file =~ /vty.c/) {
+	   if ($file =~ /\/vty\.c$/) {
 	      $protocol = "VTYSH_ALL";
 	   }
         } else {
