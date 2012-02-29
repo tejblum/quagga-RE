@@ -22,6 +22,7 @@
 ## Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ## 02111-1307, USA.  
 ##
+use strict;
 
 print <<EOF;
 #include <zebra.h>
@@ -30,6 +31,7 @@ print <<EOF;
 
 EOF
 
+my %ignore;
 $ignore{'"interface IFNAME"'} = "ignore";
 $ignore{'"ip vrf NAME"'} = "ignore";
 $ignore{'"router rip"'} = "ignore";
@@ -60,16 +62,19 @@ $ignore{'"terminal monitor"'} = "ignore";
 $ignore{'"terminal no monitor"'} = "ignore";
 $ignore{'"show history"'} = "ignore";
 
+my (%cmd2str, %cmd2defun, %cmd2proto);
+my (%ocmd, %odefun, %oproto, %live);
+
 foreach (@ARGV) {
-    $file = $_;
+    my $file = $_;
 
     open (FH, "@CPP@ @CPPFLAGS@ -DHAVE_CONFIG_H -DVTYSH_EXTRACT_PL -DHAVE_IPV6 -I@top_builddir@ -I@srcdir@/ -I@srcdir@/.. -I@top_srcdir@/lib -I@top_srcdir@/isisd/topology @SNMP_INCLUDES@ $file |");
     local $/; undef $/;
-    $line = <FH>;
+    my $line = <FH>;
     close (FH);
 
-    @defun = ($line =~ /(?:DEFUN|ALIAS)\s*\((.+?)\);?\s?\s?\n/sg);
-    @install = ($line =~ /install_element\s*\(\s*[0-9A-Z_]+,\s*&[^;]*;\s*\n/sg);
+    my @defun = ($line =~ /(?:DEFUN|ALIAS)\s*\((.+?)\);?\s?\s?\n/sg);
+    my @install = ($line =~ /install_element\s*\(\s*[0-9A-Z_]+,\s*&[^;]*;\s*\n/sg);
 
     # DEFUN process
     foreach (@defun) {
@@ -79,17 +84,18 @@ foreach (@ARGV) {
 
 
 	# Actual input command string.
-	$str = "$defun_array[2]";
+	my $str = "$defun_array[2]";
 	$str =~ s/^\s+//g;
 	$str =~ s/\s+$//g;
 
 	# Get VTY command structure.  This is needed for searching
 	# install_element() command.
-	$cmd = "$defun_array[1]";
+	my $cmd = "$defun_array[1]";
 	$cmd =~ s/^\s+//g;
 	$cmd =~ s/\s+$//g;
 
         # $protocol is VTYSH_PROTO format for redirection of user input
+	my $protocol;
     	if ($file =~ /lib/) {
            if ($file =~ /keychain.c/) {
               $protocol = "VTYSH_RIPD";
@@ -131,7 +137,7 @@ foreach (@ARGV) {
 
 	# Append _vtysh to structure then build DEFUN again
 	$defun_array[1] = $cmd . "_vtysh";
-	$defun_body = join (", ", @defun_array);
+	my $defun_body = join (", ", @defun_array);
 
 	# $cmd -> $str hash for lookup
 	$cmd2str{$cmd} = $str;
@@ -145,13 +151,13 @@ foreach (@ARGV) {
 	@element_array = split (/,/);
 
 	# Install node
-	$enode = $element_array[0];
+	my $enode = $element_array[0];
 	$enode =~ s/^\s+//g;
 	$enode =~ s/\s+$//g;
 	($enode) = ($enode =~ /([0-9A-Z_]+)$/);
 
 	# VTY command structure.
-	($ecmd) = ($element_array[1] =~ /&([^\)]+)/);
+	my ($ecmd) = ($element_array[1] =~ /&([^\)]+)/);
 	$ecmd =~ s/^\s+//g;
 	$ecmd =~ s/\s+$//g;
 
@@ -192,7 +198,7 @@ EOF
 
 foreach (keys %odefun) {
     my ($node, $str) = (split (/,/));
-    $cmd = $ocmd{$_};
+    my $cmd = $ocmd{$_};
     $cmd =~ s/_cmd/_cmd_vtysh/;
     printf "  install_element ($node, &$cmd);\n";
 }
