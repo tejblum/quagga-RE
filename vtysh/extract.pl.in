@@ -134,6 +134,7 @@ foreach (@ARGV) {
            ($protocol) = ($file =~ /^.*\/([a-z0-9]+)\/[a-zA-Z0-9_\-]+\.c$/);
            $protocol = "VTYSH_" . uc $protocol;
         }
+	die "protocol undefined in $file" if !defined($protocol);
 
 	# Append _vtysh to structure then build DEFUN again
 	$defun_array[1] = $cmd . "_vtysh";
